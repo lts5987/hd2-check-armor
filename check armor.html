@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Armor Stats Table</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      margin: 0;
+    }
+
+    h1 {
+      color: #0099ff;
+      margin-top: 0;
+    }
+
+    #searchContainer {
+      margin-bottom: 20px;
+    }
+
+    #searchInput {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      box-sizing: border-box;
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+    }
+
+    #searchInput::placeholder {
+      color: #888;
+    }
+
+    #searchInput:focus {
+      outline: none;
+      border-color: #0088ff;
+      background-color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #2a2a2a;
+      border: 1px solid #444;
+      margin-top: 20px;
+    }
+
+    thead {
+      background-color: #333;
+      position: sticky;
+      top: 0;
+    }
+
+    th {
+      padding: 12px;
+      border: 1px solid #444;
+      text-align: left;
+      font-weight: bold;
+      color: #0099ff;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border: 1px solid #444;
+    }
+
+    tbody tr:hover {
+      background-color: #353535;
+    }
+
+    .passive-cell {
+      cursor: help;
+      position: relative;
+    }
+
+    .passive-cell:hover::after {
+      content: attr(data-description);
+      position: absolute;
+      bottom: 125%;
+      left: 0;
+      background-color: #444;
+      color: #e0e0e0;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #666;
+      white-space: normal;
+      width: 250px;
+      z-index: 1000;
+      font-size: 12px;
+      line-height: 1.4;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    a {
+      color: #0099ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Helldivers 2 - Armor Stats</h1>
+  <div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Search armor (e.g., 'Tactical' or 'B-01')..." autocomplete="off">
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Armor</th>
+        <th>Speed</th>
+        <th>Stamina</th>
+        <th>Passive</th>
+        <th>Cost</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody id="armorTable">
+    </tbody>
+  </table>
+
+  <script>
+    const passiveData = [
+      {
+        "name": "Reinforced Epaulettes",
+        "description": [
+          "主武器装填速度 +30%",
+          "50% 概率避免严重肢体受伤",
+          "近战伤害 +50%"
+        ]
+      },
+      {
+        "name": "Gunslinger",
+        "description": [
+          "副武器装填速度 +40%",
+          "副武器切换速度 +50%",
+          "副武器后坐力 -70%"
+        ]
+      },
+      {
+        "name": "Integrated Explosives",
+        "description": [
+          "死亡后 1.5 秒装甲发生爆炸",
+          "投掷物初始数量 +2"
+        ]
+      },
+      {
+        "name": "Acclimated",
+        "description": [
+          "火焰、毒气、酸、电击伤害抗性 +50%"
+        ]
+      },
+      {
+        "name": "Siege-Ready",
+        "description": [
+          "主武器装填速度 +30%",
+          "所有武器弹药容量 +20%（不包含背包武器）"
+        ]
+      },
+      {
+        "name": "Unflinching",
+        "description": [
+          "防止被击中时产生硬直（flinch）",
+          "提高装甲等级",
+          "地图标记每 2 秒生成一次雷达扫描"
+        ]
+      },
+      {
+        "name": "Advanced Filtration",
+        "description": [
+          "毒气伤害与效果抗性 +80%"
+        ]
+      },
+      {
+        "name": "Inflammable",
+        "description": [
+          "火焰伤害抗性 +75%"
+        ]
+      },
+      {
+        "name": "Peak Physique",
+        "description": [
+          "近战伤害 +100%",
+          "改善武器操控性（降低武器摆动阻力）"
+        ]
+      },
+      {
+        "name": "Electrical Conduit",
+        "description": [
+          "电弧伤害抗性 +95%"
+        ]
+      },
+      {
+        "name": "Fortified",
+        "description": [
+          "蹲伏或趴下时后坐力额外降低 30%",
+          "爆炸伤害抗性 +50%"
+        ]
+      },
+      {
+        "name": "Scout",
+        "description": [
+          "地图标记每 2 秒生成一次雷达扫描",
+          "敌人发现你的距离减少 30%"
+        ]
+      },
+      {
+        "name": "Engineering Kit",
+        "description": [
+          "蹲伏或趴下时后坐力额外降低 30%",
+          "投掷物初始数量 +2"
+        ]
+      },
+      {
+        "name": "Med-Kit",
+        "description": [
+          "刺激剂初始数量 +2",
+          "刺激剂持续时间 +2 秒"
+        ]
+      },
+      {
+        "name": "Servo-Assisted",
+        "description": [
+          "投掷物投掷距离 +30%",
+          "四肢生命值 +50%"
+        ]
+      },
+      {
+        "name": "Democracy Protects",
+        "description": [
+          "受到致命伤害时有 50% 概率不死亡",
+          "胸部出血时不再受到流血伤害"
+        ]
+      },
+      {
+        "name": "Extra Padding",
+        "description": [
+          "显著提高装甲等级（提升防御力）"
+        ]
+      },
+      {
+        "name": "Feet First",
+        "description": [
+          "从较高处跳落时不受伤害",
+          "着陆时产生冲击波"
+        ]
+      },
+      {
+        "name": "Desert Stormer",
+        "description": [
+          "降低沙漠环境的视线阻碍",
+          "沙漠地形移动速度 +20%"
+        ]
+      },
+      {
+        "name": "Rock Solid",
+        "description": [
+          "岩石或矿物环境中装甲强化",
+          "爆炸伤害抗性 +30%"
+        ]
+      },
+      {
+        "name": "Reduced Signature",
+        "description": [
+          "敌人发现你的距离减少 50%",
+          "近战攻击速度 +15%"
+        ]
+      },
+      {
+        "name": "Ballistic Padding",
+        "description": [
+          "枪械伤害抗性 +25%",
+          "装甲修复速度 +20%"
+        ]
+      },
+      {
+        "name": "Adreno-Defibrillator",
+        "description": [
+          "受伤时移动速度临时提升",
+          "复苏速度 +30%"
+        ]
+      }
+    ];
+
+    const armorData = [
+      { name: "SC-37 Legionnaire", armor: "50", speed: "550", stamina: "125", passive: "Servo-Assisted", cost: "150 Super Credits", source: "Superstore" },
+      { name: "SC-34 Infiltrator", armor: "70", speed: "530", stamina: "115", passive: "Scout", cost: "3 Medals", source: "Helldivers Mobilize! P1" },
+      { name: "SC-30 Trailblazer Scout", armor: "50", speed: "550", stamina: "125", passive: "Scout", cost: "50 Medals", source: "Helldivers Mobilize! P7" },
+      { name: "CE-74 Breaker", armor: "50", speed: "550", stamina: "125", passive: "Engineering Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "FS-38 Eradicator", armor: "50", speed: "550", stamina: "125", passive: "Fortified", cost: "250 Super Credits", source: "Superstore" },
+      { name: "B-08 Light Gunner", armor: "100", speed: "550", stamina: "125", passive: "Extra Padding", cost: "150 Super Credits", source: "Superstore" },
+      { name: "CM-21 Trench Paramedic", armor: "64", speed: "536", stamina: "118", passive: "Med-Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "CE-67 Titan", armor: "79", speed: "521", stamina: "111", passive: "Engineering Kit", cost: "150 Super Credits", source: "Superstore" },
+      { name: "EX-00 Prototype X", armor: "50", speed: "550", stamina: "125", passive: "Electrical Conduit", cost: "64 Medals", source: "Cutting Edge P3" },
+      { name: "CE-07 Demolition Specialist", armor: "64", speed: "536", stamina: "118", passive: "Engineering Kit", cost: "45 Medals", source: "Democratic Detonation P2" },
+      { name: "FS-37 Ravager", armor: "50", speed: "550", stamina: "125", passive: "Engineering Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "CW-4 Arctic Ranger", armor: "50", speed: "550", stamina: "125", passive: "Scout", cost: "64 Medals", source: "Polar Patriots P3" },
+      { name: "PH-9 Predator", armor: "50", speed: "550", stamina: "125", passive: "Peak Physique", cost: "40 Medals", source: "Viper Commandos P1" },
+      { name: "I-09 Heatseeker", armor: "50", speed: "550", stamina: "125", passive: "Inflammable", cost: "18 Medals", source: "Freedom's Flame P1" },
+      { name: "AF-50 Noxious Ranger", armor: "50", speed: "550", stamina: "125", passive: "Advanced Filtration", cost: "40 Medals", source: "Chemical Agents P1" },
+      { name: "UF-16 Inspector", armor: "75", speed: "550", stamina: "125", passive: "Unflinching", cost: "65 Medals", source: "Truth Enforcers P3" },
+      { name: "SR-24 Street Scout", armor: "50", speed: "550", stamina: "125", passive: "Siege-Ready", cost: "40 Medals", source: "Urban Legends P1" },
+      { name: "AC-2 Obedient", armor: "50", speed: "550", stamina: "125", passive: "Acclimated", cost: "55 Medals", source: "Righteous Revenants P2" },
+      { name: "IE-57 Hell-Bent", armor: "50", speed: "550", stamina: "125", passive: "Integrated Explosives", cost: "250 Super Credits", source: "Superstore" },
+      { name: "GS-11 Democracy's Deputy", armor: "50", speed: "550", stamina: "125", passive: "Gunslinger", cost: "300 Super Credits", source: "Superstore" },
+      { name: "RE-1861 Parade Commander", armor: "50", speed: "550", stamina: "125", passive: "Reinforced Epaulettes", cost: "55 Medals", source: "Masters of Ceremony P2" },
+      { name: "BP-32 Jackboot", armor: "50", speed: "550", stamina: "125", passive: "Ballistic Padding", cost: "55 Medals", source: "Force of Law P2" },
+      { name: "AD-11 Livewire", armor: "50", speed: "550", stamina: "125", passive: "Adreno-Defibrillator", cost: "300 Super Credits", source: "Superstore" },
+      { name: "DS-10 Big Game Hunter", armor: "50", speed: "550", stamina: "125", passive: "Desert Stormer", cost: "300 Super Credits", source: "Superstore" },
+      { name: "RS-20 Constrictor", armor: "50", speed: "550", stamina: "125", passive: "Rock Solid", cost: "45 Medals", source: "Python Commandos P1" },
+      { name: "RS-89 Shadow Paragon", armor: "50", speed: "550", stamina: "125", passive: "Reduced Signature", cost: "??", source: "Redacted Regiment P1" },
+      { name: "B-01 Tactical", armor: "150", speed: "500", stamina: "100", passive: "Extra Padding", cost: "Free", source: "Starter Equipment" },
+      { name: "TR-7 Ambassador of the Brand", armor: "150", speed: "500", stamina: "100", passive: "Extra Padding", cost: "Free", source: "Pre-Order Bonus" },
+      { name: "TR-9 Cavalier of Democracy", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "Free", source: "Pre-Order Bonus" },
+      { name: "DP-53 Savior of the Free", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "$20", source: "Super Citizen Edition" },
+      { name: "TR-117 Alpha Commander", armor: "100", speed: "500", stamina: "100", passive: "Med-Kit", cost: "Free", source: "DLC" },
+      { name: "SC-15 Drone Master", armor: "100", speed: "500", stamina: "100", passive: "Engineering Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "CE-35 Trench Engineer", armor: "100", speed: "500", stamina: "100", passive: "Engineering Kit", cost: "10 Medals", source: "Helldivers Mobilize! P3" },
+      { name: "CM-09 Bonesnapper", armor: "100", speed: "500", stamina: "100", passive: "Med-Kit", cost: "15 Medals", source: "Helldivers Mobilize! P4" },
+      { name: "DP-40 Hero of the Federation", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "25 Medals", source: "Helldivers Mobilize! P5" },
+      { name: "SA-04 Combat Technician", armor: "100", speed: "500", stamina: "100", passive: "Scout", cost: "60 Medals", source: "Helldivers Mobilize! P8" },
+      { name: "CM-14 Physician", armor: "100", speed: "500", stamina: "100", passive: "Med-Kit", cost: "70 Medals", source: "Helldivers Mobilize! P9" },
+      { name: "DP-11 Champion of the People", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "100 Medals", source: "Helldivers Mobilize! P10" },
+      { name: "SA-25 Steel Trooper", armor: "100", speed: "500", stamina: "100", passive: "Servo-Assisted", cost: "18 Medals", source: "Steeled Veterans P1" },
+      { name: "SA-12 Servo Assisted", armor: "100", speed: "500", stamina: "100", passive: "Servo-Assisted", cost: "45 Medals", source: "Steeled Veterans P2" },
+      { name: "B-24 Enforcer", armor: "129", speed: "471", stamina: "71", passive: "Fortified", cost: "150 Super Credits", source: "Superstore" },
+      { name: "CE-81 Juggernaut", armor: "100", speed: "500", stamina: "100", passive: "Engineering Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "FS-34 Exterminator", armor: "100", speed: "500", stamina: "100", passive: "Fortified", cost: "400 Super Credits", source: "Superstore" },
+      { name: "EX-03 Prototype 3", armor: "100", speed: "500", stamina: "100", passive: "Electrical Conduit", cost: "18 Medals", source: "Cutting Edge P1" },
+      { name: "EX-16 Prototype 16", armor: "100", speed: "500", stamina: "100", passive: "Electrical Conduit", cost: "45 Medals", source: "Cutting Edge P2" },
+      { name: "CE-27 Ground Breaker", armor: "100", speed: "500", stamina: "100", passive: "Engineering Kit", cost: "18 Medals", source: "Democratic Detonation P1" },
+      { name: "CM-10 Clinician", armor: "100", speed: "500", stamina: "100", passive: "Med-Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "CW-9 White Wolf", armor: "150", speed: "500", stamina: "100", passive: "Extra Padding", cost: "300 Super Credits", source: "Superstore" },
+      { name: "PH-56 Jaguar", armor: "100", speed: "500", stamina: "100", passive: "Peak Physique", cost: "150 Super Credits", source: "Superstore" },
+      { name: "TR-40 Gold Eagle", armor: "150", speed: "500", stamina: "100", passive: "Extra Padding", cost: "Free", source: "Escalation of Freedom" },
+      { name: "I-92 Fire Fighter", armor: "100", speed: "500", stamina: "100", passive: "Inflammable", cost: "250 Super Credits", source: "Superstore" },
+      { name: "I-102 Draconaught", armor: "100", speed: "500", stamina: "100", passive: "Inflammable", cost: "45 Medals", source: "Freedom's Flame P2" },
+      { name: "AF-91 Field Chemist", armor: "100", speed: "500", stamina: "100", passive: "Advanced Filtration", cost: "250 Super Credits", source: "Superstore" },
+      { name: "AF-02 Haz-Master", armor: "100", speed: "500", stamina: "100", passive: "Advanced Filtration", cost: "45 Medals", source: "Chemical Agents P2" },
+      { name: "DP-00 Tactical", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "Free", source: "Liberty Day" },
+      { name: "UF-84 Doubt Killer", armor: "125", speed: "500", stamina: "100", passive: "Unflinching", cost: "400 Super Credits", source: "Superstore" },
+      { name: "UF-50 Bloodhound", armor: "125", speed: "500", stamina: "100", passive: "Unflinching", cost: "45 Medals", source: "Truth Enforcers P2" },
+      { name: "AC-1 Dutiful", armor: "100", speed: "500", stamina: "100", passive: "Acclimated", cost: "45 Medals", source: "Righteous Revenants P1" },
+      { name: "IE-3 Martyr", armor: "100", speed: "500", stamina: "100", passive: "Integrated Explosives", cost: "45 Medals", source: "Servants of Freedom P1" },
+      { name: "IE-12 Righteous", armor: "100", speed: "500", stamina: "100", passive: "Integrated Explosives", cost: "55 Medals", source: "Servants of Freedom P2" },
+      { name: "B-22 Model Citizen", armor: "100", speed: "500", stamina: "100", passive: "Democracy Protects", cost: "Free", source: "Anniversary Gift" },
+      { name: "GS-17 Frontier Marshal", armor: "100", speed: "500", stamina: "100", passive: "Gunslinger", cost: "45 Medals", source: "Borderline Justice P1" },
+      { name: "RE-2310 Honorary Guard", armor: "100", speed: "500", stamina: "100", passive: "Reinforced Epaulettes", cost: "45 Medals", source: "Masters of Ceremony P1" },
+      { name: "BP-20 Correct Officer", armor: "100", speed: "500", stamina: "100", passive: "Ballistic Padding", cost: "45 Medals", source: "Force of Law P1" },
+      { name: "AD-26 Bleeding Edge", armor: "100", speed: "500", stamina: "100", passive: "Adreno-Defibrillator", cost: "45 Medals", source: "Control Group P1" },
+      { name: "A-9 Helljumper", armor: "100", speed: "500", stamina: "100", passive: "Feet First", cost: "45 Medals", source: "Halo: ODST P1" },
+      { name: "A-35 Recon", armor: "100", speed: "500", stamina: "100", passive: "Feet First", cost: "55 Medals", source: "Halo: ODST P2" },
+      { name: "DS-191 Scorpion", armor: "100", speed: "500", stamina: "100", passive: "Desert Stormer", cost: "55 Medals", source: "Dust Devils P2" },
+      { name: "RS-6 Fiend Destroyer", armor: "100", speed: "500", stamina: "100", passive: "Rock Solid", cost: "300 Super Credits", source: "Superstore" },
+      { name: "RS-67 Null Cipher", armor: "100", speed: "500", stamina: "100", passive: "Reduced Signature", cost: "??", source: "Redacted Regiment P1" },
+      { name: "TR-62 Knight", armor: "150", speed: "450", stamina: "50", passive: "Servo-Assisted", cost: "Free", source: "Pre-Order Bonus" },
+      { name: "FS-05 Marksman", armor: "150", speed: "450", stamina: "50", passive: "Fortified", cost: "6 Medals", source: "Helldivers Mobilize! P2" },
+      { name: "FS-23 Battle Master", armor: "150", speed: "450", stamina: "50", passive: "Fortified", cost: "35 Medals", source: "Helldivers Mobilize! P6" },
+      { name: "SA-32 Dynamo", armor: "150", speed: "450", stamina: "50", passive: "Servo-Assisted", cost: "64 Medals", source: "Steeled Veterans P3" },
+      { name: "B-27 Fortified Commando", armor: "200", speed: "450", stamina: "50", passive: "Extra Padding", cost: "400 Super Credits", source: "Superstore" },
+      { name: "FS-61 Dreadnought", armor: "150", speed: "450", stamina: "50", passive: "Servo-Assisted", cost: "250 Super Credits", source: "Superstore" },
+      { name: "FS-11 Executioner", armor: "150", speed: "450", stamina: "50", passive: "Fortified", cost: "150 Super Credits", source: "Superstore" },
+      { name: "CM-17 Butcher", armor: "150", speed: "450", stamina: "50", passive: "Med-Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "FS-55 Devastator", armor: "150", speed: "450", stamina: "50", passive: "Fortified", cost: "64 Medals", source: "Democratic Detonation P3" },
+      { name: "CE-64 Grenadier", armor: "150", speed: "450", stamina: "50", passive: "Engineering Kit", cost: "300 Super Credits", source: "Superstore" },
+      { name: "CW-36 Winter Warrior", armor: "150", speed: "450", stamina: "50", passive: "Servo-Assisted", cost: "18 Medals", source: "Polar Patriots P1" },
+      { name: "CW-22 Kodiak", armor: "150", speed: "450", stamina: "50", passive: "Fortified", cost: "45 Medals", source: "Polar Patriots P2" },
+      { name: "CE-101 Guerilla Gorilla", armor: "150", speed: "450", stamina: "50", passive: "Engineering Kit", cost: "250 Super Credits", source: "Superstore" },
+      { name: "PH-202 Twigsnapper", armor: "150", speed: "450", stamina: "50", passive: "Peak Physique", cost: "45 Medals", source: "Viper Commandos P2" },
+      { name: "I-44 Salamander", armor: "150", speed: "450", stamina: "50", passive: "Inflammable", cost: "250 Super Credits", source: "Superstore" },
+      { name: "AF-52 Lockdown", armor: "150", speed: "450", stamina: "50", passive: "Advanced Filtration", cost: "400 Super Credits", source: "Superstore" },
+      { name: "SR-64 Cinderblock", armor: "150", speed: "450", stamina: "50", passive: "Siege-Ready", cost: "250 Super Credits", source: "Superstore" },
+      { name: "SR-18 Roadblock", armor: "150", speed: "450", stamina: "50", passive: "Siege-Ready", cost: "45 Medals", source: "Urban Legends P2" },
+      { name: "GS-66 Lawmaker", armor: "150", speed: "450", stamina: "50", passive: "Gunslinger", cost: "55 Medals", source: "Borderline Justice P2" },
+      { name: "RE-824 Bearer of the Standard", armor: "150", speed: "450", stamina: "50", passive: "Reinforced Epaulettes", cost: "400 Super Credits", source: "Superstore" },
+      { name: "BP-77 Grand Juror", armor: "150", speed: "450", stamina: "50", passive: "Ballistic Padding", cost: "250 Super Credits", source: "Superstore" },
+      { name: "AD-49 Apollonian", armor: "150", speed: "450", stamina: "50", passive: "Adreno-Defibrillator", cost: "55 Medals", source: "Control Group P2" },
+      { name: "DS-42 Federation's Blade", armor: "150", speed: "450", stamina: "50", passive: "Desert Stormer", cost: "45 Medals", source: "Dust Devils P1" },
+      { name: "RS-40 Beast of Prey", armor: "150", speed: "450", stamina: "50", passive: "Rock Solid", cost: "55 Medals", source: "Python Commandos P2" }
+    ];
+    const tableBody = document.getElementById('armorTable');
+    const searchInput = document.getElementById('searchInput');
+
+    // Create a map of passive descriptions
+    const passiveDescriptions = {};
+    passiveData.forEach(passive => {
+      passiveDescriptions[passive.name] = passive.description.join(' | ');
+    });
+
+    function getWikiLink(name) {
+      // Convert armor name to wiki URL format
+      // Example: "AC-2 Obedient" -> "AC-2_Obedient"
+      const wikiId = name.replace(/\s+/g, '_').replace(/'/g, '%27');
+      return `https://helldivers.wiki.gg/wiki/${wikiId}`;
+    }
+
+    function renderArmors(armors) {
+      tableBody.innerHTML = '';
+      armors.forEach(armor => {
+        const row = document.createElement('tr');
+        const description = passiveDescriptions[armor.passive] || 'No description available';
+        const wikiLink = getWikiLink(armor.name);
+        row.innerHTML = `
+          <td><a href="${wikiLink}" target="_blank" rel="noopener noreferrer" style="color: #0099ff; text-decoration: none;">${armor.name}</a></td>
+          <td>${armor.armor}</td>
+          <td>${armor.speed}</td>
+          <td>${armor.stamina}</td>
+          <td class="passive-cell" data-description="${description}">${armor.passive}</td>
+          <td>${armor.cost}</td>
+          <td>${armor.source}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Initial render
+    renderArmors(armorData);
+
+    // Search functionality
+    searchInput.addEventListener('input', function (e) {
+      const queries = e.target.value.toLowerCase().replace(/-/g, '').split(/\s+/).filter(q => q.length > 0);
+
+      if (queries.length === 0) {
+        renderArmors(armorData);
+        return;
+      }
+
+      const filtered = armorData.filter(armor =>
+        queries.some(query => armor.name.toLowerCase().replace(/-/g, '').includes(query))
+      );
+
+      renderArmors(filtered);
+    });
+  </script>
+</body>
+
+</html>
